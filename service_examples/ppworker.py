@@ -21,6 +21,7 @@ PPP_HEARTBEAT = "\x02"  # Signals worker heartbeat
 
 
 INDEX_PATH="indexdir"
+HOST = 'localhost'
 WORKER_HOST="tcp://localhost:5556"
 SUBSCRIBER_HOST="tcp://localhost:5557"
 
