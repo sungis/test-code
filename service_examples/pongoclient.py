@@ -7,7 +7,7 @@ import sys
 def send_request(header,q):
   SERVER_ENDPOINT = "tcp://localhost:5555"
   SERVER_ENDPOINT = "tcp://10.0.1.77:5555"
-  SERVER_ENDPOINT = "tcp://117.79.157.235:5560"
+#  SERVER_ENDPOINT = "tcp://117.79.157.235:5560"
   CLIENT_IDENTITY = "AD_Client_pyzmq" 
   c=zmq.Context()
   s=c.socket(zmq.REQ)
