@@ -36,6 +36,7 @@ class ADIndex:
         self.mac_address=self.get_mac_address()
         self.conn = pymongo.Connection(host=config.MONGO_HOST, port=config.MONGO_PORT)
         self.tagsParser = Trie(config.SKILL_FILE)
+        self.cache = {}
      
     def add_doc(self,jobs):
         writer = self.ix.writer()
@@ -158,7 +159,12 @@ class ADIndex:
             size = jdata['output']["size"]
             if action == 'adv':
                 referurl = jdata['q']["referurl"]
-                rep = self.jobs2json(self.search_by_url(referurl,size))
+                if self.cache.has_key(referurl):
+                    rep = self.cache[referurl]
+                else:
+                    rep = self.jobs2json(self.search_by_url(referurl,size))
+                    self.cache[referurl] = rep
+
             elif action == 'searchJob':
                 keyword = ''
                 uniqueorgid = False

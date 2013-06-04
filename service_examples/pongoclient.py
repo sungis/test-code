@@ -11,7 +11,7 @@ def send_request(header,q):
   CLIENT_IDENTITY = "AD_Client_pyzmq" 
   c=zmq.Context()
   s=c.socket(zmq.REQ)
-  #s.set(zmq.IDENTITY,CLIENT_IDENTITY)
+  s.set(zmq.IDENTITY,CLIENT_IDENTITY)
   s.connect(SERVER_ENDPOINT)
   m=[header,q]
   s.send_multipart(m)
@@ -21,10 +21,20 @@ import threading
 from time import sleep,ctime
 
 class advClient(threading.Thread):
+    def __init__(self,id):
+        threading.Thread.__init__(self)
+        SERVER_ENDPOINT = "tcp://10.0.1.77:5555"
+        CLIENT_IDENTITY = "AD_Client_pyzmq" 
+        c=zmq.Context()
+        self.s=c.socket(zmq.REQ)
+        self.s.set(zmq.IDENTITY,CLIENT_IDENTITY+'__'+str(id))
+        self.s.connect(SERVER_ENDPOINT)
     def run(self):
         for i in range(100):
             request='{"action":"adv","q":{"referurl":"http://blog.csdn.net/zhangchaoyangsun/article/details/8879615","keyword":[""]},"filter":{"city":[""],"province":[""]},"sort":1,"output":{"format":"json","offset":0,"size":6}}'
-            print send_request('search',request)
+            m=['search',request]
+            self.s.send_multipart(m)
+            print self.s.recv()
 
 if __name__  == '__main__':
     action = sys.argv[1]
@@ -67,7 +77,7 @@ if __name__  == '__main__':
         threads=[]
         n=100
         for i in range(n):
-            t=advClient()
+            t=advClient(i)
             threads.append(t)
             t.start()
         for i in range(n):
