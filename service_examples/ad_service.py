@@ -34,7 +34,7 @@ class ADIndex:
                     )
             self.ix = create_in(indexdir, schema)
         self.mac_address=self.get_mac_address()
-        self.conn = pymongo.Connection(host=config.MONGO_HOST, port=config.MONGO_PORT)
+        self.conn = pymongo.Connection(config.MONGO_CONN)
         self.tagsParser = Trie(config.SKILL_FILE)
         self.cache = {}
      
