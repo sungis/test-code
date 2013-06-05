@@ -14,7 +14,14 @@ import uuid
 from cache.lrucache import LRUCache
 from hashlib import md5
 import config
-
+import logging
+LOG_FILENAME="./data/ad_service.log"
+logger=logging.getLogger()
+handler=logging.FileHandler(LOG_FILENAME)
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 class ADIndex:
 
@@ -157,6 +164,7 @@ class ADIndex:
                 rep = json.dumps(rep)
                 msg = [frames[0],frames[1],rep.encode('UTF-8')]
                 worker.send_multipart(msg)
+                logger.info('search get_cache:'+mkey)
                 return 
         #无缓存流程
         jdata = json.loads(data.replace("''","0"),strict=False)
@@ -188,7 +196,7 @@ class ADIndex:
                 else:
                     rep = self.jobs2json(self.search_by_url(referurl,size))
                     self.cache[referurl] = rep
-
+                logger.info('adv:'+referurl)
             elif action == 'searchJob':
                 keyword = ''
                 uniqueorgid = False
@@ -202,12 +210,16 @@ class ADIndex:
                 if jdata.has_key('q') and jdata['q'].has_key('keyword'):
                     keyword = jdata['q']["keyword"]
                 rep = self.jobs2json(self.search(keyword,size,hunterjob,uniqueorgid))
+                logger.info('searchJob:keyword['+keyword+']')
             elif action == 'all' :#所有职位
                 rep = self.jobs2json(self.find_all(size))
+                logger.info('search all')
             elif action == 'uniqueorgid': #按orgid排重后的所有职位
                 rep = self.jobs2json(self.find_all_unique_orgid(size))
+                logger.info('search uniqueorgid')
             elif action == 'hunterjob':#获取最新猎头数据
                 rep = self.jobs2json(self.hunter_job(size))
+                logger.info('search hunterjob')
             #搜索结果添加缓存
             self.add_cache(mkey,rep)
         rep = json.dumps(rep)
