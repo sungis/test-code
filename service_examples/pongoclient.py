@@ -6,7 +6,7 @@ import sys
 
 def send_request(header,q):
   SERVER_ENDPOINT = "tcp://localhost:5555"
-  SERVER_ENDPOINT = "tcp://10.0.1.77:5555"
+#  SERVER_ENDPOINT = "tcp://10.0.1.77:5555"
 #  SERVER_ENDPOINT = "tcp://117.79.157.235:5560"
   CLIENT_IDENTITY = "AD_Client_pyzmq" 
   c=zmq.Context()
@@ -23,7 +23,8 @@ from time import sleep,ctime
 class advClient(threading.Thread):
     def __init__(self,id):
         threading.Thread.__init__(self)
-        SERVER_ENDPOINT = "tcp://10.0.1.77:5555"
+        #SERVER_ENDPOINT = "tcp://10.0.1.77:5555"
+        SERVER_ENDPOINT = "tcp://localhost:5555"
         CLIENT_IDENTITY = "AD_Client_pyzmq" 
         c=zmq.Context()
         self.s=c.socket(zmq.REQ)

@@ -11,6 +11,8 @@ import pymongo
 from ac_trie import Trie
 import json
 import uuid
+from cache.lrucache import LRUCache
+from hashlib import md5
 import config
 
 
@@ -36,7 +38,7 @@ class ADIndex:
         self.mac_address=self.get_mac_address()
         self.conn = pymongo.Connection(config.MONGO_CONN)
         self.tagsParser = Trie(config.SKILL_FILE)
-        self.cache = {}
+        self.cache = LRUCache(1024)
      
     def add_doc(self,jobs):
         writer = self.ix.writer()
@@ -84,14 +86,15 @@ class ADIndex:
 #state 1  插入 正文
 #state 2  插入 标签
     def search_by_url(self,url,limit):
-        webData = self.conn.pongo.webData
+        pagetags = self.conn.pongo.pagetags
+        pageurls = self.conn.pongo.pageurls
         url = unicode(url)
-        one = webData.find_one({"_id": url, "state": 2}, {"tags": 1})
+        one = pagetags.find_one({"_id": url}, {"tags": 1})
         if one :
             tags = one["tags"]
             return self.find(tags,limit)
         else:
-            webData.insert({"_id":url,"state":0})
+            pageurls.insert({"_id":url})
             #return ['insert :'+url]
             return None
     def jobs2json(self,jobs):
@@ -132,9 +135,30 @@ class ADIndex:
             v[i[0]]=i[1]
         return v.values()
 
+    def get_cache(self,k):
+        if k in self.cache:
+            return self.cache[k]
+        else:
+            return None
+    def add_cache(self,k,rep):
+        self.cache[k] = rep
+
     def dispatch_hander(self,worker,frames):
         header = frames[2]
         data = frames[3]
+        mkey = ''
+        #走缓存出结果
+        if header == 'search':
+            m = md5()
+            m.update(data)
+            mkey = m.hexdigest()
+            rep = self.get_cache(mkey)
+            if rep != None:
+                rep = json.dumps(rep)
+                msg = [frames[0],frames[1],rep.encode('UTF-8')]
+                worker.send_multipart(msg)
+                return 
+        #无缓存流程
         jdata = json.loads(data.replace("''","0"),strict=False)
         action = jdata ["action"]
         rep = 'request err :'+data
@@ -159,7 +183,7 @@ class ADIndex:
             size = jdata['output']["size"]
             if action == 'adv':
                 referurl = jdata['q']["referurl"]
-                if self.cache.has_key(referurl):
+                if referurl in self.cache:
                     rep = self.cache[referurl]
                 else:
                     rep = self.jobs2json(self.search_by_url(referurl,size))
@@ -184,6 +208,8 @@ class ADIndex:
                 rep = self.jobs2json(self.find_all_unique_orgid(size))
             elif action == 'hunterjob':#获取最新猎头数据
                 rep = self.jobs2json(self.hunter_job(size))
+            #搜索结果添加缓存
+            self.add_cache(mkey,rep)
         rep = json.dumps(rep)
         msg = [frames[0],frames[1],rep.encode('UTF-8')]
         worker.send_multipart(msg)

@@ -1,3 +1,7 @@
+#coding:utf-8
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 import pymongo 
 from ac_trie import Trie 
@@ -7,7 +11,7 @@ import json
 
 tagsParser = Trie('./dict/skill.txt')
 
-conn = pymongo.Connection(host='10.0.1.77', port=19753) 
+conn = pymongo.Connection(host='192.168.4.216', port=19753) 
 article = conn.tags.article 
 def cut(value):
     value=value.lower().replace('&nbsp','')
@@ -23,32 +27,27 @@ def ad_query(k):
     
 
 def load_data(): 
-    blog_id_f = open('../tags_paser/data/blog_id.txt') 
-    i = 0
-    j = 0
+    blog_id_f = open('/home/pongo/gitwork/file_bak/data/blog_id.txt') 
     for id in blog_id_f:
         id=id.strip()
-        one = article.find_one({"_id": id}, {"Title": 1,"Description":1,"category":1})
+        one = article.find_one({"_id": id}, {"Title": 1,"Description":1,"category":1,'UserName':1})
         text=one["Title"]+one["Description"]+one["category"] 
+        url = 'http://blog.csdn.net/'+one["UserName"]+'/article/details/'+str(id)
         terms = cut(text)
-        i+=1
         if len(terms)>0:
-            j += 1
-            print '=============='
-            print i
-            print text
-            print ' '.join(terms)
-            k = " ".join(set(terms))
-            data = ad_query(k)
-            jdata = json.loads(data.replace("''","0"),strict=False)
-            if jdata["totalCount"] >0 :
-                items = jdata["items"]
-                out = ''
-                for t in items:
-                    out +=str(t['jobId'])+" "+t['jobTitle']+" "
-                print out
-            if j>50:
-                break
+#            print '=============='
+#            print text
+            print url,'\t',','.join(set(terms))
+#            k = " ".join(set(terms))
+#            data = ad_query(k)
+#            jdata = json.loads(data.replace("''","0"),strict=False)
+#            if jdata["totalCount"] >0 :
+#                items = jdata["items"]
+#                out = ''
+#                for t in items:
+#                    out +=str(t['jobId'])+" "+t['jobTitle']+" "
+#                print out
+
 
 if __name__ == '__main__':
     load_data()
