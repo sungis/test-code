@@ -69,10 +69,16 @@ def load_blog(id):
             "state_c":0
             })
 
+def load_category():
+    sql = 'SELECT NAME FROM Category'
+    results = load_data(sql) 
+    for r in results:
+        print r[0]
 
 if __name__ == '__main__':
     dbconn()
     #load_blog_id()
-    load_blog()
+    #load_blog()
+    load_category()
     #load_blog('169')
     dbclose()
